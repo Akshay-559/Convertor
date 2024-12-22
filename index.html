@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Converter</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .converter-container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            max-width: 400px;
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .converter-container h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .currency-select {
+            margin-bottom: 15px;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .amount-input {
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .convert-button {
+            background: #f5576c;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background 0.3s;
+        }
+
+        .convert-button:hover {
+            background: #d04556;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+
+        .flag {
+            width: 24px;
+            height: 18px;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="converter-container">
+        <h1>Currency Converter</h1>
+        <div class="currency-select">
+            <label for="from-currency">From:</label>
+            <select id="from-currency">
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
+        <div class="currency-select">
+            <label for="to-currency">To:</label>
+            <select id="to-currency">
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
+        <div class="amount-input">
+            <label for="amount">Amount:</label>
+            <input type="number" id="amount" placeholder="Enter amount">
+        </div>
+        <button class="convert-button" onclick="convertCurrency()">Convert</button>
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const apiEndpoint = "https://api.exchangerate.host/latest";
+        const flagsBaseUrl = "https://flagcdn.com/h20/"; // Base URL for flags
+
+        async function populateCurrencies() {
+            const response = await fetch(apiEndpoint);
+            const data = await response.json();
+            const currencies = Object.keys(data.rates);
+            const fromCurrency = document.getElementById('from-currency');
+            const toCurrency = document.getElementById('to-currency');
+
+            currencies.forEach(currency => {
+                const flagCode = currency.slice(0, 2).toLowerCase(); // Extract flag code
+                const option = document.createElement('option');
+                option.value = currency;
+                option.innerHTML = `<img class='flag' src='${flagsBaseUrl}${flagCode}.png' alt='Flag'> ${currency}`;
+                fromCurrency.appendChild(option.cloneNode(true));
+                toCurrency.appendChild(option.cloneNode(true));
+            });
+        }
+
+        async function convertCurrency() {
+            const fromCurrency = document.getElementById('from-currency').value;
+            const toCurrency = document.getElementById('to-currency').value;
+            const amount = document.getElementById('amount').value;
+
+            if (!fromCurrency || !toCurrency || !amount) {
+                document.getElementById('result').textContent = "Please fill in all fields.";
+                return;
+            }
+
+            const response = await fetch(`${apiEndpoint}?base=${fromCurrency}&symbols=${toCurrency}`);
+            const data = await response.json();
+
+            if (data && data.rates[toCurrency]) {
+                const rate = data.rates[toCurrency];
+                const convertedAmount = (rate * amount).toFixed(2);
+                document.getElementById('result').textContent = `${amount} ${fromCurrency} = ${convertedAmount} ${toCurrency}`;
+            } else {
+                document.getElementById('result').textContent = "Conversion failed. Please try again.";
+            }
+        }
+
+        populateCurrencies();
+    </script>
+</body>
+</html>
